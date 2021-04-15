@@ -9,10 +9,13 @@ bl_info = {
     "location": "shortcut: End key",
     "wiki_url": "https://www.cgradproject.com/archives/5503/",
     "tracker_url": "",
-    "category": "System"}
+    "category": "System",
+}
+
 
 class OBJECT_OT_translatedUI_toggle(bpy.types.Operator):
     """Toggle International Fonts"""
+
     bl_idname = "object.translatedui_toggle"
     bl_label = "Toggle Translated UI"
 
@@ -21,18 +24,19 @@ class OBJECT_OT_translatedUI_toggle(bpy.types.Operator):
         bpy.context.preferences.view.use_translate_interface = not b
         b = bpy.context.preferences.view.use_translate_tooltips
         bpy.context.preferences.view.use_translate_tooltips = not b
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 # Registration
+
 
 def register():
     bpy.utils.register_class(OBJECT_OT_translatedUI_toggle)
     kc = bpy.context.window_manager.keyconfigs.addon
     if kc:
         km = kc.keymaps.new(name="Window", space_type="EMPTY")
-#        kmi = km.keymap_items.new('object.translatedui_toggle', 'SPACE', 'PRESS', shift=True)
-        kmi = km.keymap_items.new('object.translatedui_toggle', 'END', 'PRESS')
+        #        kmi = km.keymap_items.new('object.translatedui_toggle', 'SPACE', 'PRESS', shift=True)
+        kmi = km.keymap_items.new("object.translatedui_toggle", "END", "PRESS")
 
 
 def unregister():
@@ -41,9 +45,10 @@ def unregister():
     if kc:
         km = kc.keymaps["Window"]
         for kmi in km.keymap_items:
-            if kmi.idname == 'object.translatedui_toggle':
+            if kmi.idname == "object.translatedui_toggle":
                 km.keymap_items.remove(kmi)
                 break
+
 
 if __name__ == "__main__":
     register()
