@@ -3,10 +3,9 @@ import bpy
 bl_info = {
     "name": "Toggle Translated UI",
     "author": "Original:Satoshi Yamasaki(yamyam), Converted to 2.83: Toudou++, nepia11",
-    "version": (4, 0),
+    "version": (4, 1),
     "blender": (2, 83, 0),
-    "description": "Toggle International Fonts option to switch translated"
-    "/ non translated UI.",
+    "description": "Toggle Language",
     "location": "shortcut: End key",
     "wiki_url": "https://www.cgradproject.com/archives/5503/",
     "tracker_url": "",
@@ -29,40 +28,36 @@ class OBJECT_OT_translatedUI_toggle(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class Language_Toggle(bpy.types.Operator):
-    """ toggle language """
+class TTUI_Language_Toggle(bpy.types.Operator):
+    """ 英語とその他で言語設定を切り替える　新規データのオプション強制False """
 
     bl_idname = "preferences.language_toggle"
     bl_label = "Toggle UI Language"
 
     # アドオン有効時に切り替える前の状態を保存しておく
     pref = bpy.context.preferences
-    lang = pref.view.language
-    interface_flag = pref.view.use_translate_interface
-    tooltips_flag = pref.view.use_translate_tooltips
-    new_dataname_flag = pref.view.use_translate_new_dataname
+    lang = "DEFAULT"
+    # interface_flag = pref.view.use_translate_interface
+    # tooltips_flag = pref.view.use_translate_tooltips
+    # new_dataname_flag = pref.view.use_translate_new_dataname
 
     def execute(self, context):
         # 言語切り替えをする
         pref = bpy.context.preferences
         if pref.view.language == self.lang:
-            # 切り替える前に変更があったら保存したかったけどちょっとうまく行かない
-            # self.interface_flag = pref.view.use_translate_interface
-            # self.tooltips_flag = pref.view.use_translate_tooltips
-            # self.new_dataname_flag = pref.view.use_translate_new_dataname
             pref.view.language = "en_US"
         else:
             pref.view.language = self.lang
-            pref.view.use_translate_interface = self.interface_flag
-            pref.view.use_translate_tooltips = self.tooltips_flag
-            pref.view.use_translate_new_dataname = self.new_dataname_flag
+            pref.view.use_translate_interface = True
+            pref.view.use_translate_tooltips = True
+            pref.view.use_translate_new_dataname = False
         return {"FINISHED"}
 
 
 # Registration
 classes = [
     OBJECT_OT_translatedUI_toggle,
-    Language_Toggle,
+    TTUI_Language_Toggle,
 ]
 
 keymaps = []
@@ -88,6 +83,7 @@ def unregister():
         for km, kmi in keymaps:
             # ショートカットキーの登録解除
             km.keymap_items.remove(kmi)
+        keymaps.clear()
 
 
 if __name__ == "__main__":
