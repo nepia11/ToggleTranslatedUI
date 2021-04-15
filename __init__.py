@@ -5,7 +5,8 @@ bl_info = {
     "author": "Original:Satoshi Yamasaki(yamyam), Converted to 2.83: Toudou++, nepia11",
     "version": (4, 0),
     "blender": (2, 83, 0),
-    "description": "Toggle International Fonts option to switch translated / non transleted UI.",
+    "description": "Toggle International Fonts option to switch translated"
+    "/ non translated UI.",
     "location": "shortcut: End key",
     "wiki_url": "https://www.cgradproject.com/archives/5503/",
     "tracker_url": "",
@@ -34,16 +35,21 @@ class Language_Toggle(bpy.types.Operator):
     bl_idname = "preferences.language_toggle"
     bl_label = "Toggle UI Language"
 
-    # 切り替える前の状態を保存しておく
-    lang = bpy.context.preferences.view.language
-    interface_flag = bpy.context.preferences.view.use_translate_interface
-    tooltips_flag = bpy.context.preferences.view.use_translate_tooltips
-    new_dataname_flag = bpy.context.preferences.view.use_translate_new_dataname
+    # アドオン有効時に切り替える前の状態を保存しておく
+    pref = bpy.context.preferences
+    lang = pref.view.language
+    interface_flag = pref.view.use_translate_interface
+    tooltips_flag = pref.view.use_translate_tooltips
+    new_dataname_flag = pref.view.use_translate_new_dataname
 
     def execute(self, context):
         # 言語切り替えをする
         pref = bpy.context.preferences
         if pref.view.language == self.lang:
+            # 切り替える前に変更があったら保存したかったけどちょっとうまく行かない
+            # self.interface_flag = pref.view.use_translate_interface
+            # self.tooltips_flag = pref.view.use_translate_tooltips
+            # self.new_dataname_flag = pref.view.use_translate_new_dataname
             pref.view.language = "en_US"
         else:
             pref.view.language = self.lang
@@ -68,7 +74,7 @@ def register():
     kc = bpy.context.window_manager.keyconfigs.addon
     if kc:
         km = kc.keymaps.new(name="Window", space_type="EMPTY")
-        #        kmi = km.keymap_items.new('object.translatedui_toggle', 'SPACE', 'PRESS', shift=True)
+        # kmi = km.keymap_items.new('object.translatedui_toggle', 'SPACE', 'PRESS', shift=True)
         # kmi = km.keymap_items.new("object.translatedui_toggle", "END", "PRESS")
         kmi = km.keymap_items.new("preferences.language_toggle", "END", "PRESS")
         keymaps.append((km, kmi))
