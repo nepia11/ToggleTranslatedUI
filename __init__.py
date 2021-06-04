@@ -1,10 +1,11 @@
 import bpy
 import rna_keymap_ui
+from bl_i18n_utils.settings import LANGUAGES
 
 bl_info = {
     "name": "Toggle Translated UI",
     "author": "Original:Satoshi Yamasaki(yamyam), Converted to 2.83: Toudou++, nepia11",
-    "version": (6, 0),
+    "version": (6, 1),
     "blender": (2, 83, 0),
     "description": "Toggle Language",
     "location": "shortcut: End key",
@@ -33,12 +34,11 @@ def update_language(self, context):
 
 class TTUI_Preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
+    # LANGUAGESがenumに適していない形式っぽいのでよしなにする
+    LANGUAGE_ENUM_ITEMS = [(code, name, "", number) for number, name, code in LANGUAGES]
 
     # props
-    def prop_template(name: str, lang):
-        locales = bpy.app.translations.locales
-        items = list(zip(locales, locales, [""] * len(locales)))
-        items.append(("DEFAULT", "DEFAULT", ""))
+    def prop_template(items: list, lang: str):
         Language = bpy.props.EnumProperty(
             name="Language",
             items=items,
@@ -64,14 +64,15 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
         return Language, Tooltips, Interface, New_Data
 
     main_language, main_tooltips, main_interface, main_new_data = prop_template(
-        "main", "en_US"
+        items=LANGUAGE_ENUM_ITEMS, lang="en_US"
     )
     sub_language, sub_tooltips, sub_interface, sub_new_data = prop_template(
-        "sub", bpy.context.preferences.view.language
+        items=LANGUAGE_ENUM_ITEMS, lang=bpy.context.preferences.view.language
     )
 
     is_main_language = bpy.props.BoolProperty(
         name="is main language",
+        subtype="POWER",
         default=False,
         update=update_language,
     )
@@ -136,7 +137,6 @@ class TTUI_Language_Toggle(bpy.types.Operator):
 
     def execute(self, context):
         # 言語切り替えをする
-        print("exec")
         pref = bpy.context.preferences
         addon_prefs = pref.addons[__name__].preferences
         addon_prefs.is_main_language = not addon_prefs.is_main_language
