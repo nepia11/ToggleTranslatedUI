@@ -1,9 +1,10 @@
 import bpy
+import rna_keymap_ui
 
 bl_info = {
     "name": "Toggle Translated UI",
     "author": "Original:Satoshi Yamasaki(yamyam), Converted to 2.83: Toudou++, nepia11",
-    "version": (5, 0),
+    "version": (6, 0),
     "blender": (2, 83, 0),
     "description": "Toggle Language",
     "location": "shortcut: End key",
@@ -13,9 +14,27 @@ bl_info = {
 }
 
 
+def update_language(self, context):
+    """ prefの言語設定を反映する """
+    pref = bpy.context.preferences
+    addon_prefs = pref.addons[__name__].preferences
+    if addon_prefs.is_main_language:
+        pref.view.language = addon_prefs.main_language
+        pref.view.use_translate_interface = addon_prefs.main_interface
+        pref.view.use_translate_tooltips = addon_prefs.main_tooltips
+        pref.view.use_translate_new_dataname = addon_prefs.main_new_data
+    else:
+        pref.view.language = addon_prefs.sub_language
+        pref.view.use_translate_interface = addon_prefs.sub_interface
+        pref.view.use_translate_tooltips = addon_prefs.sub_tooltips
+        pref.view.use_translate_new_dataname = addon_prefs.sub_new_data
+    return None
+
+
 class TTUI_Preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
 
+    # props
     def prop_template(name: str, lang):
         locales = bpy.app.translations.locales
         items = list(zip(locales, locales, [""] * len(locales)))
@@ -24,19 +43,23 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
             name="Language",
             items=items,
             default=lang,
+            update=update_language,
         )
         Tooltips = bpy.props.BoolProperty(
             name="Tooltips",
             default=True,
+            update=update_language,
         )
 
         Interface = bpy.props.BoolProperty(
             name="Interface",
             default=True,
+            update=update_language,
         )
         New_Data = bpy.props.BoolProperty(
             name="New Data",
             default=False,
+            update=update_language,
         )
         return Language, Tooltips, Interface, New_Data
 
@@ -50,12 +73,42 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
     is_main_language = bpy.props.BoolProperty(
         name="is main language",
         default=False,
+        update=update_language,
     )
+
+    # keymaps
+    keymaps = []
+
+    @classmethod
+    def register(cls):
+        wm = bpy.context.window_manager
+        kc = wm.keyconfigs.addon
+        if kc:
+            km = kc.keymaps.new(name="Window", space_type="EMPTY")
+            kmi = km.keymap_items.new(
+                idname="preferences.language_toggle", type="END", value="PRESS"
+            )
+            # ショートカットキー一覧に登録
+            cls.keymaps.append((km, kmi))
+
+    @classmethod
+    def unregister(cls):
+        for km, kmi in cls.keymaps:
+            # ショートカットキーの登録解除
+            km.keymap_items.remove(kmi)
+        # ショートカットキー一覧をクリア
+        cls.keymaps.clear()
 
     def draw(self, context):
         layout = self.layout
 
-        # layout.prop(self, "is_main_language")
+        # keymaps
+        layout.label(text="keymap")
+        kc = bpy.context.window_manager.keyconfigs.addon
+        for km, kmi in self.keymaps:
+            rna_keymap_ui.draw_kmi([], kc, km, kmi, layout, 0)
+
+        layout.prop(self, "is_main_language")
         row = layout.row(align=True)
         # main_lang = row.column(align=True)
         main_lang = row.box()
@@ -76,30 +129,16 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
 
 
 class TTUI_Language_Toggle(bpy.types.Operator):
-    """ 英語とその他で言語設定を切り替える　新規データのオプション強制False """
+    """ 英語とその他で言語設定を切り替える """
 
     bl_idname = "preferences.language_toggle"
     bl_label = "Toggle UI Language"
 
-    # アドオン有効時に切り替える前の状態を保存しておく
-    pref = bpy.context.preferences
-    lang = "DEFAULT"
-
     def execute(self, context):
-        preferences = context.preferences
-        addon_prefs = preferences.addons[__name__].preferences
         # 言語切り替えをする
+        print("exec")
         pref = bpy.context.preferences
-        if not addon_prefs.is_main_language:
-            pref.view.language = addon_prefs.main_language
-            pref.view.use_translate_interface = addon_prefs.main_interface
-            pref.view.use_translate_tooltips = addon_prefs.main_tooltips
-            pref.view.use_translate_new_dataname = addon_prefs.main_new_data
-        else:
-            pref.view.language = addon_prefs.sub_language
-            pref.view.use_translate_interface = addon_prefs.sub_interface
-            pref.view.use_translate_tooltips = addon_prefs.sub_tooltips
-            pref.view.use_translate_new_dataname = addon_prefs.sub_new_data
+        addon_prefs = pref.addons[__name__].preferences
         addon_prefs.is_main_language = not addon_prefs.is_main_language
         return {"FINISHED"}
 
@@ -110,28 +149,15 @@ classes = [
     TTUI_Language_Toggle,
 ]
 
-keymaps = []
-
 
 def register():
     for c in classes:
         bpy.utils.register_class(c)
-    kc = bpy.context.window_manager.keyconfigs.addon
-    if kc:
-        km = kc.keymaps.new(name="Window", space_type="EMPTY")
-        kmi = km.keymap_items.new("preferences.language_toggle", "END", "PRESS")
-        keymaps.append((km, kmi))
 
 
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
-    kc = bpy.context.window_manager.keyconfigs.addon
-    if kc:
-        for km, kmi in keymaps:
-            # ショートカットキーの登録解除
-            km.keymap_items.remove(kmi)
-        keymaps.clear()
 
 
 if __name__ == "__main__":
