@@ -5,7 +5,7 @@ from bl_i18n_utils.settings import LANGUAGES
 bl_info = {
     "name": "Toggle Translated UI",
     "author": "Original:Satoshi Yamasaki(yamyam), Converted to 2.83: Toudou++, nepia11",
-    "version": (6, 1),
+    "version": (6, 2),
     "blender": (2, 83, 0),
     "description": "Toggle Language",
     "location": "shortcut: End key",
@@ -36,43 +36,62 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     # LANGUAGESがenumに適していない形式っぽいのでよしなにする
     LANGUAGE_ENUM_ITEMS = [(code, name, "", number) for number, name, code in LANGUAGES]
+    print("blidname", bl_idname)
 
-    # props
-    def prop_template(items: list, lang: str):
-        Language = bpy.props.EnumProperty(
-            name="Language",
-            items=items,
-            default=lang,
-            update=update_language,
-        )
-        Tooltips = bpy.props.BoolProperty(
-            name="Tooltips",
-            default=True,
-            update=update_language,
-        )
-
-        Interface = bpy.props.BoolProperty(
-            name="Interface",
-            default=True,
-            update=update_language,
-        )
-        New_Data = bpy.props.BoolProperty(
-            name="New Data",
-            default=False,
-            update=update_language,
-        )
-        return Language, Tooltips, Interface, New_Data
-
-    main_language, main_tooltips, main_interface, main_new_data = prop_template(
-        items=LANGUAGE_ENUM_ITEMS, lang="en_US"
+    # flake8がundefined nameってうるさいので定義
+    _Language = "Language"
+    _en_US = "en_US"
+    _Tooltips = "Tooltips"
+    _Interface = "Interface"
+    _New_Data = "New Data"
+    _is_main_language = "is main language"
+    # main
+    main_language: bpy.props.EnumProperty(
+        name=_Language,
+        items=LANGUAGE_ENUM_ITEMS,
+        default=_en_US,
+        update=update_language,
     )
-    sub_language, sub_tooltips, sub_interface, sub_new_data = prop_template(
-        items=LANGUAGE_ENUM_ITEMS, lang=bpy.context.preferences.view.language
+    main_tooltips: bpy.props.BoolProperty(
+        name=_Tooltips,
+        default=True,
+        update=update_language,
     )
-
-    is_main_language = bpy.props.BoolProperty(
-        name="is main language",
-        subtype="POWER",
+    main_interface: bpy.props.BoolProperty(
+        name=_Interface,
+        default=True,
+        update=update_language,
+    )
+    main_new_data: bpy.props.BoolProperty(
+        name=_New_Data,
+        default=False,
+        update=update_language,
+    )
+    # sub
+    sub_language: bpy.props.EnumProperty(
+        name=_Language,
+        items=LANGUAGE_ENUM_ITEMS,
+        default=bpy.context.preferences.view.language,
+        update=update_language,
+    )
+    sub_tooltips: bpy.props.BoolProperty(
+        name=_Tooltips,
+        default=True,
+        update=update_language,
+    )
+    sub_interface: bpy.props.BoolProperty(
+        name=_Interface,
+        default=True,
+        update=update_language,
+    )
+    sub_new_data: bpy.props.BoolProperty(
+        name=_New_Data,
+        default=False,
+        update=update_language,
+    )
+    # 切り替えるやつ
+    is_main_language: bpy.props.BoolProperty(
+        name=_is_main_language,
         default=False,
         update=update_language,
     )
@@ -114,7 +133,6 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
         # main_lang = row.column(align=True)
         main_lang = row.box()
         main_lang.label(text="main language")
-        # localeを流用すると、locale文字列で言語選択することになるので視認性が悪い　どうやったらいい感じに言語名とlocaleのenumを取得できるかな
         main_lang.prop(self, "main_language")
         main_lang.prop(self, "main_tooltips")
         main_lang.prop(self, "main_interface")
