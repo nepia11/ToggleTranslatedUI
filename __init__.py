@@ -21,21 +21,19 @@ def update_language(self, context):
     addon_prefs = pref.addons[__name__].preferences
     if addon_prefs.is_main_language:
         pref.view.language = addon_prefs.main_language
-        pref.view.use_translate_interface = addon_prefs.main_interface
-        pref.view.use_translate_tooltips = addon_prefs.main_tooltips
-        pref.view.use_translate_new_dataname = addon_prefs.main_new_data
     else:
         pref.view.language = addon_prefs.sub_language
-        pref.view.use_translate_interface = addon_prefs.sub_interface
-        pref.view.use_translate_tooltips = addon_prefs.sub_tooltips
-        pref.view.use_translate_new_dataname = addon_prefs.sub_new_data
+    pref.view.use_translate_interface = addon_prefs.interface
+    pref.view.use_translate_tooltips = addon_prefs.tooltips
+    pref.view.use_translate_new_dataname = addon_prefs.new_data
     return None
 
 
 class TTUI_Preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
     # LANGUAGESがenumに適していない形式っぽいのでよしなにする
-    LANGUAGE_ENUM_ITEMS = [(code, name, "", number) for number, name, code in LANGUAGES]
+    LANGUAGE_ENUM_ITEMS = [(code, name, "", number)
+                           for number, name, code in LANGUAGES]
     print("blidname", bl_idname)
 
     # flake8がundefined nameってうるさいので定義
@@ -52,21 +50,6 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
         default=_en_US,
         update=update_language,
     )
-    main_tooltips: bpy.props.BoolProperty(
-        name=_Tooltips,
-        default=True,
-        update=update_language,
-    )
-    main_interface: bpy.props.BoolProperty(
-        name=_Interface,
-        default=True,
-        update=update_language,
-    )
-    main_new_data: bpy.props.BoolProperty(
-        name=_New_Data,
-        default=False,
-        update=update_language,
-    )
     # sub
     sub_language: bpy.props.EnumProperty(
         name=_Language,
@@ -74,21 +57,23 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
         default=bpy.context.preferences.view.language,
         update=update_language,
     )
-    sub_tooltips: bpy.props.BoolProperty(
+
+    tooltips: bpy.props.BoolProperty(
         name=_Tooltips,
         default=True,
         update=update_language,
     )
-    sub_interface: bpy.props.BoolProperty(
+    interface: bpy.props.BoolProperty(
         name=_Interface,
         default=True,
         update=update_language,
     )
-    sub_new_data: bpy.props.BoolProperty(
+    new_data: bpy.props.BoolProperty(
         name=_New_Data,
         default=False,
         update=update_language,
     )
+
     # 切り替えるやつ
     is_main_language: bpy.props.BoolProperty(
         name=_is_main_language,
@@ -101,6 +86,9 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
 
     @classmethod
     def register(cls):
+        if cls.keymaps != []:
+            cls.keymaps.clear()
+
         wm = bpy.context.window_manager
         kc = wm.keyconfigs.addon
         if kc:
@@ -129,22 +117,20 @@ class TTUI_Preferences(bpy.types.AddonPreferences):
             rna_keymap_ui.draw_kmi([], kc, km, kmi, layout, 0)
 
         layout.prop(self, "is_main_language")
-        row = layout.row(align=True)
-        # main_lang = row.column(align=True)
-        main_lang = row.box()
-        main_lang.label(text="main language")
-        main_lang.prop(self, "main_language")
-        main_lang.prop(self, "main_tooltips")
-        main_lang.prop(self, "main_interface")
-        main_lang.prop(self, "main_new_data")
-
-        # sub_lang = row.column(align=True)
-        sub_lang = row.box()
-        sub_lang.label(text="sub language")
-        sub_lang.prop(self, "sub_language")
-        sub_lang.prop(self, "sub_tooltips")
-        sub_lang.prop(self, "sub_interface")
-        sub_lang.prop(self, "sub_new_data")
+        # main_lang
+        row1 = layout.box()
+        lang = row1.row()
+        lang.label(text="main language")
+        lang.prop(self, "main_language")
+        # sub_lang
+        lang.label(text="sub language")
+        lang.prop(self, "sub_language")
+        # option
+        row2 = layout.box()
+        option = row2.row()
+        option.prop(self, "tooltips")
+        option.prop(self, "interface")
+        option.prop(self, "new_data")
 
 
 class TTUI_Language_Toggle(bpy.types.Operator):
